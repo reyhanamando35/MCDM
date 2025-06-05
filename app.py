@@ -74,9 +74,6 @@ with col2:
 with col3:
     if st.button("💼 Job Positions", use_container_width=True):
         st.session_state.page = "Job Positions"
-with col4:
-    if st.button("📊 Analysis", use_container_width=True):
-        st.session_state.page = "Analysis"
 
 # Initialize session state
 if 'page' not in st.session_state:
@@ -113,13 +110,8 @@ if st.session_state.page == "Home":
             index=selected_job_index, # Menggunakan selected_job_index
             key="home_selectbox_job" # Tambahkan key unik
         )
-        
-    with col2:
-        generate_final = st.button("🚀 Generate Final Data", use_container_width=True)
-    
-    with col3:
-        st.write("")  # Empty space for alignment
 
+    generate_final = st.button("🚀 Generate Final Data", use_container_width=True)
     if generate_final:
         st.success(f"Menganalisis kandidat untuk posisi: {selected_job}")
         
@@ -140,6 +132,8 @@ if st.session_state.page == "Home":
         st.dataframe(aggregated_data, use_container_width=True)
 
     st.markdown("---")
+   
+
 
     # MCDM Analysis Buttons
     st.subheader("🔬 Analisis MCDM")
@@ -391,18 +385,3 @@ elif st.session_state.page == "Job Positions":
                     st.write(f"**Secondary PAPI:** {', '.join(selected_secondary_papi_list_input)}")
                 else:
                     st.write(f"**Secondary PAPI:** Tidak ada yang dipilih")
-
-# ... (kode untuk halaman Analysis) ...
-# ---------- ANALYSIS PAGE ---------- #
-elif st.session_state.page == "Analysis":
-    st.title("📊 Analisis Data")
-    st.info("Halaman ini akan berisi analisis mendalam dari hasil MCDM dan visualisasi data kandidat.")
-    
-    # Placeholder untuk analisis lebih lanjut
-    st.subheader("📈 Statistik Kandidat")
-    if len(data) > 0:
-        st.write(f"Total Kandidat: {len(data)}")
-        st.write(f"Total Posisi Pekerjaan: {len(st.session_state.job_positions_df )}")
-    
-    st.subheader("🔍 Filter dan Pencarian")
-    st.info("Fitur filter berdasarkan kriteria tertentu akan ditambahkan di sini.")

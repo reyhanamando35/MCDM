@@ -30,12 +30,21 @@ def agg_to_5(data, job_filter_row):
     result['IST'] = temp[iq_col].where(temp['std_dev'] < threshold, temp[iq_col] * 0.9)
 
     # ===== 2. PAPI Kostick =====
-    papi_pos = ['P_A', 'P_C', 'P_E', 'P_F', 'P_G', 'P_H', 'P_I', 'P_L', 'P_N']
-    papi_neg = ['P_B', 'P_D', 'P_J', 'P_K', 'P_M', 'P_O']
-    papi_contextual = ['P_B', 'P_O', 'P_R', 'P_D', 'P_Z']
+    papi_pos = ['P_C', 'P_F', 'P_W', 'P_N', 'P_G', 'P_A', 'P_P', 'P_I', 'P_V']
+    papi_neg = ['P_S', 'P_X', 'P_E', 'P_K', 'P_L', 'P_T']
 
-    daya_kerja = data[papi_pos + papi_contextual].sum(axis=1)
+    # Ambil huruf dari kolom 'PAPI context' di job_filter_row (misal 'R')
+    context_letter = job_filter_row['PAPI context'].strip().upper()
+    context_col = f'P_{context_letter}'
+
+    # Pastikan kolom tersebut memang ada di data
+    if context_col not in data.columns:
+        raise ValueError(f"Kolom kontekstual {context_col} tidak ditemukan di data kandidat.")
+
+    # Hitung skor
+    daya_kerja = data[papi_pos].sum(axis=1) + data[context_col]
     risiko = data[papi_neg].sum(axis=1)
+
     result['PAPI'] = daya_kerja - risiko
 
     # ===== 3. MBTI =====
@@ -56,7 +65,9 @@ def agg_to_5(data, job_filter_row):
 
     # ===== 5. DISC =====
     disc_cols = ['D_D', 'D_I', 'D_S', 'D_C']
-    disc_minmax = data[disc_cols].apply(lambda x: (x - x.min()) / (9 - 0))  # normalisasi manual
+
+    # Normalisasi min-max per kolom
+    disc_minmax = (data[disc_cols] - data[disc_cols].min()) / (data[disc_cols].max() - data[disc_cols].min())
 
     disc_weights = [
         job_filter_row['D'],
@@ -65,5 +76,5 @@ def agg_to_5(data, job_filter_row):
         job_filter_row['C']
     ]
     result['DISC'] = disc_minmax.dot(disc_weights)
-
+    
     return result

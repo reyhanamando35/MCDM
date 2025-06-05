@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re # Import modul regular expression
+from utils.preprocess import agg_to_5
 
 # Fungsi untuk memformat string MBTI ke akronim atau membiarkannya jika sudah akronim
 def format_mbti_for_display(mbti_string):
@@ -86,15 +87,8 @@ def render_page(data_kandidat, job_positions_df_from_state):
             st.success(f"Menganalisis kandidat untuk posisi: {selected_job}")
 
             st.subheader("📊 Data Hasil Agregasi (5 Kriteria)")
-            np.random.seed(42)
-            aggregated_data = pd.DataFrame({
-                'Nama': data_kandidat['NAMA'],
-                'IST_Score': np.random.randint(60, 100, len(data_kandidat)),
-                'MBTI_Score': np.random.randint(60, 100, len(data_kandidat)),
-                'PAPI_Score': np.random.randint(60, 100, len(data_kandidat)),
-                'DISC_Score': np.random.randint(60, 100, len(data_kandidat)),
-                'Kraepelin_Score': np.random.randint(60, 100, len(data_kandidat))
-            })
+
+            aggregated_data = agg_to_5(data_kandidat, job_positions_df_from_state.loc[job_positions_df_from_state['Job Position'] == selected_job].iloc[0])
             st.dataframe(aggregated_data, use_container_width=True)
 
     st.markdown("---")

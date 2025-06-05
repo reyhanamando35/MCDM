@@ -1,15 +1,23 @@
+# app.py
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 import os
 
 # Import fungsi render dari modul views
+# Pastikan nama file di folder 'views' sesuai:
+# views/home_page.py
+# views/input_data_page.py
+# views/job_positions_page.py
 from views import home_page, input_data_page, job_positions_page
 
 # ---------- Konfigurasi Halaman ---------- #
 st.set_page_config(page_title="Seleksi Karyawan", layout="wide")
 
-CSV_COLUMNS = [
+# ---------- Definisi Kolom Global ---------- #
+# Kolom untuk dataset.csv (Kandidat)
+CSV_COLUMNS_KANDIDAT = [
     "NAMA", "SE", "WA", "AN", "GE", "ME", "RA", "ZR", "FA", "WU", "IQ",
     "P_C", "P_F", "P_W", "P_N", "P_G", "P_A", "P_P", "P_I", "P_V", "P_S",
     "P_X", "P_E", "P_K", "P_L", "P_T", "P_B", "P_O", "P_R", "P_D", "P_Z",
@@ -18,174 +26,124 @@ CSV_COLUMNS = [
     "D_D", "D_I", "D_S", "D_C"
 ]
 
-# ---------- Load Dataset Kandidat ---------- #
+# Kolom untuk job_positions.csv (sudah 10 kolom)
+EXPECTED_JOB_COLUMNS = [
+    'Job Position', 'PAPI context', 'M', 'B', 'T', 'I_M',
+    'D', 'I_D', 'S', 'C'
+]
+JOB_POSITIONS_CSV_PATH = "job_positions.csv"
+
+# ---------- Load Dataset Kandidat (dataset.csv) ---------- #
 @st.cache_data
-def load_data():
-    file_path = os.path.abspath("dataset.csv")
+def load_data_kandidat(): # Mengganti nama fungsi agar lebih spesifik
+    file_path = "dataset.csv" # Path relatif biasanya cukup
     try:
-        df = pd.read_csv("dataset.csv")
-        return df
+        df = pd.read_csv(file_path)
+        # Pastikan semua kolom yang diharapkan ada, tambahkan jika tidak ada
+        for col in CSV_COLUMNS_KANDIDAT:
+            if col not in df.columns:
+                df[col] = np.nan # atau nilai default lainnya
+        return df[CSV_COLUMNS_KANDIDAT] # Pastikan urutan kolom
     except FileNotFoundError:
-        st.error(f"File dataset.csv tidak ditemukan di {file_path}!")
-        return pd.DataFrame(columns=CSV_COLUMNS)
+        st.error(f"File {file_path} tidak ditemukan!")
+        return pd.DataFrame(columns=CSV_COLUMNS_KANDIDAT)
     except pd.errors.EmptyDataError:
         st.warning(f"File {file_path} kosong. Menginisialisasi DataFrame kosong.")
-        return pd.DataFrame(columns=CSV_COLUMNS)
+        return pd.DataFrame(columns=CSV_COLUMNS_KANDIDAT)
+    except Exception as e:
+        st.error(f"Error saat memuat {file_path}: {e}")
+        return pd.DataFrame(columns=CSV_COLUMNS_KANDIDAT)
 
-data_kandidat = load_data()
-
-
-# load Dataset Job_Position
+# ---------- Load/Initialize Job Positions (job_positions.csv) ---------- #
 @st.cache_data
 def get_default_job_positions_data():
     data = {
         'Job Position': ['Pre-Sales', 'IT Developer', 'Sales Manager', 'Admin', 'Marketing'],
-        'MBTI Preferences': ['ENTJ, ENFJ', 'INTJ, INTP', 'ESFJ, ENFJ', 'ISFJ, ISTJ', 'ENFP, ESFP'],
-        'PAPI Kostick Preferences': ['Leadership, Assertive', 'Analytical, Detail', 'Social, Persuasive', 'Organized, Stable', 'Creative, Flexible']
+        'PAPI context': ['O', 'R', 'B', 'D', 'Z'],
+        'M': ['E', 'I', 'E', 'I', 'E'],
+        'B': ['N', 'N', 'S', 'S', 'N'],
+        'T': ['T', 'T', 'F', 'T', 'F'],
+        'I_M': ['J', 'P', 'J', 'J', 'P'],
+        'D': [0.3, 0.1, 0.2, 0.4, 0.25],
+        'I_D': [0.4, 0.2, 0.3, 0.1, 0.25],
+        'S': [0.2, 0.2, 0.3, 0.3, 0.25],
+        'C': [0.1, 0.5, 0.2, 0.2, 0.25]
     }
-    return pd.DataFrame(data)
-
-JOB_POSITIONS_CSV_PATH = "job_positions.csv"
+    default_df = pd.DataFrame(data)
+    for col in EXPECTED_JOB_COLUMNS:
+        if col not in default_df.columns:
+            if col in ['D', 'I_D', 'S', 'C']:
+                default_df[col] = np.nan
+            else:
+                default_df[col] = None
+    return default_df[EXPECTED_JOB_COLUMNS]
 
 def load_or_initialize_job_positions():
     try:
         df = pd.read_csv(JOB_POSITIONS_CSV_PATH)
+        if not all(col in df.columns for col in EXPECTED_JOB_COLUMNS) or len(df.columns) != len(EXPECTED_JOB_COLUMNS):
+            st.warning(f"Struktur kolom di {JOB_POSITIONS_CSV_PATH} tidak sesuai. Menginisialisasi ulang dengan default.")
+            raise FileNotFoundError # Anggap file tidak valid, paksa buat ulang
         if df.empty:
             st.info(f"{JOB_POSITIONS_CSV_PATH} kosong. Menggunakan data default dan menyimpannya.")
             default_df = get_default_job_positions_data()
             default_df.to_csv(JOB_POSITIONS_CSV_PATH, index=False)
-            return default_df
-        return df
-    except FileNotFoundError:
-        st.info(f"{JOB_POSITIONS_CSV_PATH} tidak ditemukan. Membuat file dengan data default.")
+            return default_df.copy()
+        return df.copy()
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        st.info(f"{JOB_POSITIONS_CSV_PATH} tidak ditemukan atau kosong/rusak. Membuat file dengan data default.")
         default_df = get_default_job_positions_data()
         default_df.to_csv(JOB_POSITIONS_CSV_PATH, index=False)
-        return default_df
-    except pd.errors.EmptyDataError: # Menangani jika CSV ada tapi kosong
-        st.info(f"{JOB_POSITIONS_CSV_PATH} ada tapi kosong. Menggunakan data default dan menyimpannya.")
+        return default_df.copy()
+    except Exception as e:
+        st.error(f"Error saat memuat {JOB_POSITIONS_CSV_PATH}: {e}. Menginisialisasi ulang dengan default.")
         default_df = get_default_job_positions_data()
         default_df.to_csv(JOB_POSITIONS_CSV_PATH, index=False)
-        return default_df
+        return default_df.copy()
 
-
+# ---------- Inisialisasi Session State & Data ---------- #
 if 'job_positions_df' not in st.session_state:
     st.session_state.job_positions_df = load_or_initialize_job_positions()
 
+data_kandidat = load_data_kandidat() # Load data kandidat
 
-# ---------- Navbar Navigation ---------- #
-# Pastikan navigasi selalu ditampilkan
-nav_cols = st.columns([2, 2, 2, 4]) # Memberi nama berbeda dari kolom di page lain
-with nav_cols[0]:
-    if st.button("🏠 Home", use_container_width=True):
-        st.session_state.page = "Home"
-with nav_cols[1]:
-    if st.button("📝 Input Data", use_container_width=True):
-        st.session_state.page = "Input Data"
-with nav_cols[2]:
-    if st.button("💼 Job Positions", use_container_width=True):
-        st.session_state.page = "Job Positions"
-
-# Initialize session state for page
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
 
+# ---------- Navbar Navigation (INI BAGIAN YANG PENTING!)---------- #
+st.markdown("---") # Garis pemisah sebelum navigasi
+nav_cols = st.columns([1, 1, 1, 5]) # Sesuaikan rasio jika perlu
+with nav_cols[0]:
+    if st.button("🏠 Home", use_container_width=True, key="nav_home"):
+        st.session_state.page = "Home"
+with nav_cols[1]:
+    if st.button("📝 Candidate Data", use_container_width=True, key="nav_input_data"): # Ubah nama tombol agar lebih jelas
+        st.session_state.page = "Input Data"
+with nav_cols[2]:
+    if st.button("💼 Job Positions", use_container_width=True, key="nav_job_positions"): # Ubah nama tombol
+        st.session_state.page = "Job Positions"
+st.markdown("---") # Garis pemisah setelah navigasi
 
 # ---------- Page Rendering Logic ---------- #
 if st.session_state.page == "Home":
     home_page.render_page(data_kandidat, st.session_state.job_positions_df)
 elif st.session_state.page == "Input Data":
-    st.title("📝 Input Data Kandidat")
-    st.subheader("📥 Input Data Calon Baru")
-
-    with st.form("input_form_kandidat"): # Beri nama form yang unik
-        nama = st.text_input("Nama Calon")
-        st.markdown("---")
-        
-        all_input_values = {} # Dictionary untuk menyimpan semua nilai input
-
-        # IST Section (10 fields + IQ = 10 fields)
-        st.markdown("### 🧠 IST (Intelligence Structure Test)")
-        ist_fields = [col for col in CSV_COLUMNS if col in ["SE", "WA", "AN", "GE", "ME", "RA", "ZR", "FA", "WU", "IQ"]]
-        cols_ist = st.columns(5)
-        for i, field in enumerate(ist_fields):
-            with cols_ist[i % 5]:
-                all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=150, key=f"input_ist_{field}") # IQ bisa > 100
-        st.markdown("---")
-        
-        # PAPI Kostick Section (20 fields)
-        st.markdown("### 📊 PAPI Kostick")
-        papi_fields = [col for col in CSV_COLUMNS if col.startswith("P_")]
-        # Layout PAPI: 5 fields per row
-        num_papi_cols_ui = 5
-        for i in range(0, len(papi_fields), num_papi_cols_ui):
-            cols_papi = st.columns(num_papi_cols_ui)
-            for j, field in enumerate(papi_fields[i : i + num_papi_cols_ui]):
-                with cols_papi[j]:
-                    all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=9, key=f"input_papi_{field}")
-        st.markdown("---")
-        
-        # MBTI Section (8 fields)
-        st.markdown("### 🎭 MBTI")
-        mbti_fields = [col for col in CSV_COLUMNS if col.startswith("M_")]
-        cols_mbti = st.columns(4)
-        for i, field in enumerate(mbti_fields):
-            with cols_mbti[i % 4]:
-                all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=100, key=f"input_mbti_{field}")
-        st.markdown("---")
-        
-        # Kraepelin Section (5 fields)
-        st.markdown("### ⏱️ Kraepelin")
-        kraep_fields = [col for col in CSV_COLUMNS if col.startswith("K_")]
-        cols_kraep = st.columns(len(kraep_fields) if len(kraep_fields) > 0 else 1)
-        for i, field in enumerate(kraep_fields):
-            with cols_kraep[i % len(kraep_fields) if len(kraep_fields) > 0 else 0]:
-                 all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=100, key=f"input_kraep_{field}") # Sesuaikan max_value jika perlu
-        st.markdown("---")
-        
-        # DISC Section (4 fields)
-        st.markdown("### 🎯 DISC")
-        disc_fields = [col for col in CSV_COLUMNS if col.startswith("D_")]
-        cols_disc = st.columns(len(disc_fields) if len(disc_fields) > 0 else 1)
-        for i, field in enumerate(disc_fields):
-            with cols_disc[i % len(disc_fields) if len(disc_fields) > 0 else 0]:
-                all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=9, key=f"input_disc_{field}")
-
-        submitted_kandidat = st.form_submit_button("➕ Tambahkan ke Data Kandidat")
-
-        if submitted_kandidat:
-                if not nama:
-                    st.error("Nama Calon tidak boleh kosong.")
-                else:
-                    # Siapkan data untuk baris baru sesuai urutan CSV_COLUMNS
-                    new_row_data = [nama] # NAMA adalah kolom pertama
-                    for col_name in CSV_COLUMNS[1:]: # Mulai dari kolom kedua setelah NAMA
-                        new_row_data.append(all_input_values.get(col_name, np.nan))
-
-                    new_row_df = pd.DataFrame([new_row_data], columns=CSV_COLUMNS)
-                    
-                    try:
-                        file_exists = os.path.exists("Dataset.csv")
-                        is_empty = False
-                        if file_exists:
-                            try:
-                                df_check = pd.read_csv("Dataset.csv")
-                                if df_check.empty:
-                                    is_empty = True
-                            except pd.errors.EmptyDataError:
-                                is_empty = True
-                        
-                        write_header = not file_exists or is_empty
-                        new_row_df.to_csv("Dataset.csv", mode='a', header=write_header, index=False)
-                        st.session_state.candidate_success_message = f"Data untuk {nama} berhasil ditambahkan ke Dataset.csv!"
-                        
-                        # Hanya jalankan ini jika penyimpanan berhasil
-                        if hasattr(load_data, 'clear'): 
-                            load_data.clear() 
-                        st.rerun()  # Rerun setelah sukses dan clear cache
-                    except Exception as e:
-                        st.error(f"Gagal menyimpan data ke CSV: {e}")
-        
-# ---------- JOB POSITIONS PAGE ---------- #
+    # Panggil fungsi render dari input_data_page.py
+    # Pastikan input_data_page.render_page() didefinisikan dengan benar
+    # dan menerima argumen yang sesuai.
+    # Misal: input_data_page.render_page(CSV_COLUMNS_KANDIDAT, load_data_kandidat)
+    # Untuk sekarang, kita tampilkan placeholder jika belum ada:
+    if hasattr(input_data_page, 'render_page'):
+         input_data_page.render_page(CSV_COLUMNS_KANDIDAT, load_data_kandidat) # Sesuaikan argumen jika perlu
+    else:
+         st.error("views/input_data_page.py belum memiliki fungsi render_page atau belum diimport dengan benar.")
 elif st.session_state.page == "Job Positions":
-    # Kita meneruskan JOB_POSITIONS_CSV_PATH
-    job_positions_page.render_page(JOB_POSITIONS_CSV_PATH)
+    # job_positions_page.render_page HARUS diperbarui untuk menangani 10 kolom
+    # dan CSV path yang benar
+    if hasattr(job_positions_page, 'render_page'):
+        job_positions_page.render_page(JOB_POSITIONS_CSV_PATH) # , EXPECTED_JOB_COLUMNS) # Anda mungkin perlu passing EXPECTED_JOB_COLUMNS jika dibutuhkan oleh page
+    else:
+        st.error("views/job_positions_page.py belum memiliki fungsi render_page atau belum diimport dengan benar.")
+else:
+    st.session_state.page = "Home" # Default jika ada state aneh
+    home_page.render_page(data_kandidat, st.session_state.job_positions_df) # Tampilkan home

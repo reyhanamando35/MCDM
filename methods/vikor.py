@@ -18,11 +18,11 @@ def calculate_vikor(data, criteria, weights):
     """
     
     # 1. Siapkan matriks keputusan
-    decision_matrix, alternatives = prep_dm(data, criteria)
+    dm, alternatives = prep_dm(data, criteria)
     
     # 2. Tentukan nilai ideal positif dan negatif
-    f_star = np.max(decision_matrix, axis=0)  # Nilai terbaik setiap kriteria
-    f_minus = np.min(decision_matrix, axis=0)  # Nilai terburuk setiap kriteria
+    f_star = np.max(dm, axis=0)  # Nilai terbaik setiap kriteria
+    f_minus = np.min(dm, axis=0)  # Nilai terburuk setiap kriteria
     
     # 3. Hitung nilai S dan R untuk setiap alternatif
     S = np.zeros(len(alternatives))
@@ -34,7 +34,7 @@ def calculate_vikor(data, criteria, weights):
         
         for j in range(len(criteria)):
             if f_star[j] != f_minus[j]:  # Hindari pembagian dengan 0
-                normalized_diff = (f_star[j] - decision_matrix[i, j]) / (f_star[j] - f_minus[j])
+                normalized_diff = (f_star[j] - dm[i, j]) / (f_star[j] - f_minus[j])
                 weighted_diff = weights[j] * normalized_diff
                 
                 s_values.append(weighted_diff)

@@ -21,12 +21,15 @@ CSV_COLUMNS = [
 # ---------- Load Dataset Kandidat ---------- #
 @st.cache_data
 def load_data():
-    file_path = os.path.abspath("Dataset.csv")
+    file_path = os.path.abspath("dataset.csv")
     try:
-        df = pd.read_csv("Dataset.csv")
+        df = pd.read_csv("dataset.csv")
         return df
     except FileNotFoundError:
-        st.error(f"File Dataset.csv tidak ditemukan di {file_path}!")
+        st.error(f"File dataset.csv tidak ditemukan di {file_path}!")
+        return pd.DataFrame(columns=CSV_COLUMNS)
+    except pd.errors.EmptyDataError:
+        st.warning(f"File {file_path} kosong. Menginisialisasi DataFrame kosong.")
         return pd.DataFrame(columns=CSV_COLUMNS)
 
 data_kandidat = load_data()

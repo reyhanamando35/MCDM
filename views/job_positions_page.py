@@ -11,6 +11,34 @@ def render_page(app_job_positions_csv_path):
         job_position_input_nama = st.text_input("Nama Posisi Pekerjaan", placeholder="Contoh: Software Engineer")
         st.markdown("---")
 
+        st.markdown("### 🎯 PAPI Context (pilih salah satu preferensi utama)")
+
+        papi_context_options = {
+            "O - Betah terhadap Kelompok": "O",
+            "B - Empati / relasi pribadi": "B",
+            "R - Tipe teoritis": "R",
+            "D - Suka detail": "D",
+            "Z - Suka perubahan": "Z"
+        }
+
+        selected_label = st.selectbox("Pilih PAPI Context:", options=list(papi_context_options.keys()))
+        selected_value = papi_context_options[selected_label]
+
+        selected_papi_context_label = st.selectbox(
+        "Pilih salah satu preferensi utama PAPI:", 
+        list(papi_context_options.keys()),
+        index=None,
+        placeholder="Pilih salah satu (O, B, R, D, Z)"
+    )
+        all_input_values = {}
+        for col in ["P_O", "P_B", "P_R", "P_D", "P_Z"]:
+            if selected_papi_context_label and papi_context_options[selected_papi_context_label] == col:
+                all_input_values[col] = 1
+            else:
+                all_input_values[col] = 0
+
+
+
         st.markdown("### 🎭 MBTI Preferences")
         st.write("Pilih tipe MBTI yang sesuai untuk posisi ini:")
         mbti_types_options = ["Extroverted (E)", "Introverted (I)", "Sensing (S)", "iNtuition (N)", "Thinking (T)", "Feeling (F)", "Judging (J)", "Percieving (P)"]
@@ -23,53 +51,46 @@ def render_page(app_job_positions_csv_path):
                     selected_mbti_list_input.append(mbti_option_text)
         st.markdown("---")
 
-        st.markdown("### 📊 PAPI Kostick Primary Preference")
-        st.write("Pilih karakteristik utama yang diperlukan:")
-        papi_primary_options_list = [
-            "Leadership & Dominance", "Analytical & Detail-Oriented", 
-            "Social & People-Oriented", "Organized & Systematic", "Creative & Flexible"
-        ]
-        selected_papi_primary_input = st.radio(
-            "Pilih satu karakteristik utama:",
-            papi_primary_options_list,
-            key="job_papi_primary_input"
-        )
-        st.markdown("---")
 
-        st.markdown("### 📋 PAPI Kostick Secondary Preferences (Opsional)")
-        st.write("Pilih karakteristik tambahan yang diinginkan:")
-        selected_secondary_papi_list_input = []
-        col_papi_sec_1, col_papi_sec_2 = st.columns(2)
-        secondary_papi_options_list = ["High Energy", "Aggressive", "Competitive", "Outgoing", "Social"]
-        for i, papi_sec_option_text in enumerate(secondary_papi_options_list):
-            target_col_sec = col_papi_sec_1 if i < (len(secondary_papi_options_list) / 2) else col_papi_sec_2
-            with target_col_sec:
-                if st.checkbox(papi_sec_option_text, key=f"job_papi_sec_input_{papi_sec_option_text.replace(' ', '_')}"):
-                    selected_secondary_papi_list_input.append(papi_sec_option_text)
+
+        st.markdown("### 🔢 Skor DISC")
+        st.write("Masukkan skor untuk setiap komponen DISC (total harus 1.0):")
+        col1, col2 = st.columns(2)
+        with col1:
+            val_D = st.number_input("D (Dominance)", min_value=0.0, max_value=1.0, step=0.01, key="score_D")
+            val_ID = st.number_input("I_D (Influence)", min_value=0.0, max_value=1.0, step=0.01, key="score_ID")
+        with col2:
+            val_S = st.number_input("S (Steadiness)", min_value=0.0, max_value=1.0, step=0.01, key="score_S")
+            val_C = st.number_input("C (Conscientiousness)", min_value=0.0, max_value=1.0, step=0.01, key="score_C")
 
         submitted_button_job = st.form_submit_button("💾 Simpan Posisi Pekerjaan")
 
         if submitted_button_job:
+            total_disc = val_D + val_ID + val_S + val_C
             if not job_position_input_nama:
                 st.error("Nama Posisi Pekerjaan tidak boleh kosong.")
+            elif not selected_papi_context_label:
+                st.error("Silakan pilih satu preferensi utama PAPI (O, B, R, D, atau Z).")
+            elif abs(total_disc - 1.0) > 0.01:
+                st.error(f"❌ Total D+I+S+C harus = 1.0. Saat ini: {total_disc:.2f}")
             elif job_position_input_nama in st.session_state.job_positions_df['Job Position'].tolist():
                 st.warning(f"Posisi '{job_position_input_nama}' sudah ada dalam daftar.")
             else:
                 mbti_preferences_string = ", ".join(selected_mbti_list_input) if selected_mbti_list_input else "Tidak ada preferensi MBTI dipilih"
-                papi_kostick_string = selected_papi_primary_input
-                if selected_secondary_papi_list_input:
-                    papi_kostick_string += f" ({', '.join(selected_secondary_papi_list_input)})"
                 
                 new_job_entry_df = pd.DataFrame([{
+                    'PAPI context' : selected_value,
                     'Job Position': job_position_input_nama,
-                    'MBTI Preferences': mbti_preferences_string,
-                    'PAPI Kostick Preferences': papi_kostick_string
+                    "D": val_D,
+                    "I_D": val_ID,
+                    "S": val_S,
+                    "C": val_C
                 }])
                 
                 st.session_state.job_positions_df = pd.concat(
                     [st.session_state.job_positions_df, new_job_entry_df],
                     ignore_index=True
-                )
+                ) 
                 
                 try:
                     st.session_state.job_positions_df.to_csv(app_job_positions_csv_path, index=False)
@@ -81,8 +102,3 @@ def render_page(app_job_positions_csv_path):
                 st.markdown("### 📋 Ringkasan Posisi yang Ditambahkan (Sesi Ini):")
                 st.write(f"**Posisi:** {job_position_input_nama}")
                 st.write(f"**MBTI Preferences:** {mbti_preferences_string}")
-                st.write(f"**Primary PAPI:** {selected_papi_primary_input}")
-                if selected_secondary_papi_list_input:
-                    st.write(f"**Secondary PAPI:** {', '.join(selected_secondary_papi_list_input)}")
-                else:
-                    st.write(f"**Secondary PAPI:** Tidak ada yang dipilih")

@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import re # Import modul regular expression
+import re
 from utils.preprocess import agg_to_5
+from methods.vikor import run_vikor
+from methods.electre import run_electre
 
 # Fungsi untuk memformat string MBTI ke akronim atau membiarkannya jika sudah akronim
 def format_mbti_for_display(mbti_string):
@@ -88,8 +90,8 @@ def render_page(data_kandidat, job_positions_df_from_state):
 
             st.subheader("📊 Data Hasil Agregasi (5 Kriteria)")
 
-            aggregated_data = agg_to_5(data_kandidat, job_positions_df_from_state.loc[job_positions_df_from_state['Job Position'] == selected_job].iloc[0])
-            st.dataframe(aggregated_data, use_container_width=True)
+            agg_data = agg_to_5(data_kandidat, job_positions_df_from_state.loc[job_positions_df_from_state['Job Position'] == selected_job].iloc[0])
+            st.dataframe(agg_data, use_container_width=True)
 
     st.markdown("---")
 
@@ -128,7 +130,8 @@ def render_page(data_kandidat, job_positions_df_from_state):
             st.dataframe(df_vikor.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
         elif run_electre:
             st.markdown("### 📊 Hasil ELECTRE")
-            df_electre = dummy_scores("ELECTRE", candidate_names_for_dummy)
+            # df_electre = dummy_scores("ELECTRE", candidate_names_for_dummy)
+            # df_electre = run_electre(agg_to_5(data_kandidat, job_positions_df_from_state.loc[job_positions_df_from_state['Job Position'] == selected_job].iloc[0]), selected_job) masih salah inii
             st.dataframe(df_electre.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
     elif generate_final or run_all or run_vikor or run_electre:
         st.warning("Tidak ada data kandidat untuk diproses. Silakan input data terlebih dahulu.")

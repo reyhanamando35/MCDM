@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from utils.preprocess import prep_dm
+from utils.preprocess import prep_dm, agg_to_5
 
 def norm(matrix):
     """
@@ -16,29 +16,29 @@ def norm(matrix):
     
     return normalized
 
-def calc_electre(data, criteria_columns):
+def calc_electre(data, criteria):
     """
     Implementasi metode ELECTRE
     
     Parameters:
     - data: DataFrame kandidat
-    - criteria_columns: list nama kolom kriteria
+    - criteria: list nama kolom kriteria
     
     Returns:
     - DataFrame hasil ranking ELECTRE
     """
     
     # 1. Siapkan matriks keputusan
-    decision_matrix, alternatives = prep_dm(data, criteria_columns)
+    dm, alt = prep_dm(data, criteria)
     
     # 2. Normalisasi matriks
-    norm_matx = norm(decision_matrix)
+    norm_matx = norm(dm)
     
     ## 3. Matriks terbobot (semua bobot = 0.2)
     weights = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
     weighted = norm_matx * weights
     
-    n = len(alternatives)
+    n = len(alt)
     
     # 4. Hitung matriks concordance
     concordance = np.zeros((n, n))
@@ -47,7 +47,7 @@ def calc_electre(data, criteria_columns):
         for j in range(n):
             if i != j:
                 concordance_set = []
-                for k in range(len(criteria_columns)):
+                for k in range(len(criteria)):
                     if weighted[i, k] >= weighted[j, k]:
                         concordance_set.append(weights[k])
                 concordance[i, j] = np.sum(concordance_set)
@@ -60,7 +60,7 @@ def calc_electre(data, criteria_columns):
             if i != j:
                 # Hitung maksimum selisih pada kriteria discordance
                 max_diff_discord = 0
-                for k in range(len(criteria_columns)):
+                for k in range(len(criteria)):
                     # Discordance terjadi ketika weighted[j,k] > weighted[i,k]
                     if weighted[j, k] > weighted[i, k]:
                         diff = abs(weighted[j, k] - weighted[i, k])
@@ -69,7 +69,7 @@ def calc_electre(data, criteria_columns):
                 
                 # Hitung maksimum selisih dari seluruh kriteria
                 max_diff_all = 0
-                for k in range(len(criteria_columns)):
+                for k in range(len(criteria)):
                     diff = abs(weighted[i, k] - weighted[j, k])
                     if diff > max_diff_all:
                         max_diff_all = diff
@@ -114,29 +114,29 @@ def calc_electre(data, criteria_columns):
     
     # 10. Buat DataFrame hasil
     results = pd.DataFrame({
-        'Nama': alternatives,
+        'Nama': alt,
         'Skor ELECTRE': electre_scores
     })
     
     # 11. Ranking berdasarkan skor (descending)
     results = results.sort_values('Skor ELECTRE', ascending=False)
-    results['Ranking'] = range(1, len(alternatives) + 1)
+    results['Ranking'] = range(1, len(alt) + 1)
     
     return results[['Nama', 'Skor ELECTRE', 'Ranking']]
 
 # ========== FUNGSI WRAPPER UNTUK STREAMLIT ========== #
 
-def run_electre(data, job_position=None):
+def run_electre(data, job_filter_row):
     """
     Wrapper untuk menjalankan analisis ELECTRE
     """
     # Agregasi data ke 5 kriteria
-    aggregated_data = agg_to_5(data)
+    aggregated_data = agg_to_5(data, job_filter_row)
     
     # Definisi kriteria dan bobot
-    criteria_columns = ['IST', 'PAPI Kostick', 'MBTI', 'Kraepelin', 'DISC']
+    criteria = ['IST', 'PAPI Kostick', 'MBTI', 'Kraepelin', 'DISC']
     
     # Jalankan ELECTRE
-    results = calc_electre(aggregated_data, criteria_columns)
+    results = calc_electre(aggregated_data, criteria)
     
     return results

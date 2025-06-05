@@ -21,15 +21,12 @@ CSV_COLUMNS = [
 # ---------- Load Dataset Kandidat ---------- #
 @st.cache_data
 def load_data():
-    file_path = "Dataset.csv" # Path relatif sudah cukup jika di direktori yang sama
+    file_path = os.path.abspath("Dataset.csv")
     try:
-        df = pd.read_csv(file_path)
+        df = pd.read_csv("Dataset.csv")
         return df
     except FileNotFoundError:
-        st.error(f"File {file_path} tidak ditemukan!")
-        return pd.DataFrame(columns=CSV_COLUMNS)
-    except pd.errors.EmptyDataError:
-        st.warning(f"File {file_path} kosong. Menginisialisasi DataFrame kosong.")
+        st.error(f"File Dataset.csv tidak ditemukan di {file_path}!")
         return pd.DataFrame(columns=CSV_COLUMNS)
 
 data_kandidat = load_data()
@@ -94,8 +91,98 @@ if 'page' not in st.session_state:
 if st.session_state.page == "Home":
     home_page.render_page(data_kandidat, st.session_state.job_positions_df)
 elif st.session_state.page == "Input Data":
-    # Kita meneruskan CSV_COLUMNS dan fungsi load_data agar page input bisa clear cache
-    input_data_page.render_page(CSV_COLUMNS, load_data)
+    st.title("📝 Input Data Kandidat")
+    st.subheader("📥 Input Data Calon Baru")
+
+    with st.form("input_form_kandidat"): # Beri nama form yang unik
+        nama = st.text_input("Nama Calon")
+        st.markdown("---")
+        
+        all_input_values = {} # Dictionary untuk menyimpan semua nilai input
+
+        # IST Section (10 fields + IQ = 10 fields)
+        st.markdown("### 🧠 IST (Intelligence Structure Test)")
+        ist_fields = [col for col in CSV_COLUMNS if col in ["SE", "WA", "AN", "GE", "ME", "RA", "ZR", "FA", "WU", "IQ"]]
+        cols_ist = st.columns(5)
+        for i, field in enumerate(ist_fields):
+            with cols_ist[i % 5]:
+                all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=150, key=f"input_ist_{field}") # IQ bisa > 100
+        st.markdown("---")
+        
+        # PAPI Kostick Section (20 fields)
+        st.markdown("### 📊 PAPI Kostick")
+        papi_fields = [col for col in CSV_COLUMNS if col.startswith("P_")]
+        # Layout PAPI: 5 fields per row
+        num_papi_cols_ui = 5
+        for i in range(0, len(papi_fields), num_papi_cols_ui):
+            cols_papi = st.columns(num_papi_cols_ui)
+            for j, field in enumerate(papi_fields[i : i + num_papi_cols_ui]):
+                with cols_papi[j]:
+                    all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=9, key=f"input_papi_{field}")
+        st.markdown("---")
+        
+        # MBTI Section (8 fields)
+        st.markdown("### 🎭 MBTI")
+        mbti_fields = [col for col in CSV_COLUMNS if col.startswith("M_")]
+        cols_mbti = st.columns(4)
+        for i, field in enumerate(mbti_fields):
+            with cols_mbti[i % 4]:
+                all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=100, key=f"input_mbti_{field}")
+        st.markdown("---")
+        
+        # Kraepelin Section (5 fields)
+        st.markdown("### ⏱️ Kraepelin")
+        kraep_fields = [col for col in CSV_COLUMNS if col.startswith("K_")]
+        cols_kraep = st.columns(len(kraep_fields) if len(kraep_fields) > 0 else 1)
+        for i, field in enumerate(kraep_fields):
+            with cols_kraep[i % len(kraep_fields) if len(kraep_fields) > 0 else 0]:
+                 all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=100, key=f"input_kraep_{field}") # Sesuaikan max_value jika perlu
+        st.markdown("---")
+        
+        # DISC Section (4 fields)
+        st.markdown("### 🎯 DISC")
+        disc_fields = [col for col in CSV_COLUMNS if col.startswith("D_")]
+        cols_disc = st.columns(len(disc_fields) if len(disc_fields) > 0 else 1)
+        for i, field in enumerate(disc_fields):
+            with cols_disc[i % len(disc_fields) if len(disc_fields) > 0 else 0]:
+                all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=9, key=f"input_disc_{field}")
+
+        submitted_kandidat = st.form_submit_button("➕ Tambahkan ke Data Kandidat")
+
+        if submitted_kandidat:
+                if not nama:
+                    st.error("Nama Calon tidak boleh kosong.")
+                else:
+                    # Siapkan data untuk baris baru sesuai urutan CSV_COLUMNS
+                    new_row_data = [nama] # NAMA adalah kolom pertama
+                    for col_name in CSV_COLUMNS[1:]: # Mulai dari kolom kedua setelah NAMA
+                        new_row_data.append(all_input_values.get(col_name, np.nan))
+
+                    new_row_df = pd.DataFrame([new_row_data], columns=CSV_COLUMNS)
+                    
+                    try:
+                        file_exists = os.path.exists("Dataset.csv")
+                        is_empty = False
+                        if file_exists:
+                            try:
+                                df_check = pd.read_csv("Dataset.csv")
+                                if df_check.empty:
+                                    is_empty = True
+                            except pd.errors.EmptyDataError:
+                                is_empty = True
+                        
+                        write_header = not file_exists or is_empty
+                        new_row_df.to_csv("Dataset.csv", mode='a', header=write_header, index=False)
+                        st.session_state.candidate_success_message = f"Data untuk {nama} berhasil ditambahkan ke Dataset.csv!"
+                        
+                        # Hanya jalankan ini jika penyimpanan berhasil
+                        if hasattr(load_data, 'clear'): 
+                            load_data.clear() 
+                        st.rerun()  # Rerun setelah sukses dan clear cache
+                    except Exception as e:
+                        st.error(f"Gagal menyimpan data ke CSV: {e}")
+        
+# ---------- JOB POSITIONS PAGE ---------- #
 elif st.session_state.page == "Job Positions":
     # Kita meneruskan JOB_POSITIONS_CSV_PATH
     job_positions_page.render_page(JOB_POSITIONS_CSV_PATH)

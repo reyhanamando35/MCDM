@@ -9,7 +9,7 @@ def prep_dm(data, criteria):
     alternatives = data['NAMA'].tolist()
     return matrix, alternatives
 
-def aggregate_to_5_criteria(data):
+def agg_to_5(data):
     """
     Mengagregasi 47 kolom menjadi 5 kriteria utama
     """

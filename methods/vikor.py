@@ -70,3 +70,20 @@ def calculate_vikor(data, criteria, weights):
     results['Ranking'] = range(1, len(alternatives) + 1)
     
     return results[['Nama', 'Skor VIKOR', 'Ranking']]
+
+def run_vikor_analysis(data, job_position=None):
+    """
+    Wrapper untuk menjalankan analisis VIKOR
+    """
+    # Agregasi data ke 5 kriteria
+    aggregated_data = aggregate_to_5_criteria(data)
+    
+    # Definisi kriteria dan bobot
+    criteria_columns = ['IST_Score', 'MBTI_Score', 'PAPI_Score', 'DISC_Score', 'Kraepelin_Score']
+    weights = np.array([0.25, 0.2, 0.2, 0.2, 0.15])  # Bobot bisa disesuaikan
+    benefit_criteria = [0, 1, 2, 3, 4]  # Semua kriteria adalah benefit
+    
+    # Jalankan VIKOR
+    results = calculate_vikor(aggregated_data, criteria_columns, weights, benefit_criteria)
+    
+    return results

@@ -1,10 +1,10 @@
-# ========== IMPLEMENTASI ELECTRE ========== #
+# ========== IMPLEMENTASI VIKOR ========== #
 
 import numpy as np
 import pandas as pd
-from utils.preprocess import prep_dm
+from utils.preprocess import prep_dm, agg_to_5
 
-def calculate_vikor(data, criteria, weights):
+def calc_vikor(data, criteria, weights):
     """
     Implementasi metode VIKOR
     
@@ -70,3 +70,20 @@ def calculate_vikor(data, criteria, weights):
     results['Ranking'] = range(1, len(alternatives) + 1)
     
     return results[['Nama', 'Skor VIKOR', 'Ranking']]
+
+def run_vikor(data, job_position=None):
+    """
+    Wrapper untuk menjalankan analisis VIKOR
+    """
+    # Agregasi data ke 5 kriteria
+    aggregated_data = agg_to_5(data)
+    
+    # Definisi kriteria dan bobot
+    criteria_columns = ['IST_Score', 'MBTI_Score', 'PAPI_Score', 'DISC_Score', 'Kraepelin_Score']
+    weights = np.array([0.25, 0.2, 0.2, 0.2, 0.15])  # Bobot bisa disesuaikan
+    benefit_criteria = [0, 1, 2, 3, 4]  # Semua kriteria adalah benefit
+    
+    # Jalankan VIKOR
+    results = calc_vikor(aggregated_data, criteria_columns, weights, benefit_criteria)
+    
+    return results

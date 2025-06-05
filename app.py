@@ -18,12 +18,12 @@ CSV_COLUMNS = [
 # ---------- Load Dataset Kandidat ---------- #
 # @st.cache_data
 def load_data():
-    file_path = os.path.abspath("Dataset.csv")
+    file_path = os.path.abspath("dataset.csv")
     try:
-        df = pd.read_csv("Dataset.csv")
+        df = pd.read_csv("dataset.csv")
         return df
     except FileNotFoundError:
-        st.error(f"File Dataset.csv tidak ditemukan di {file_path}!")
+        st.error(f"File dataset.csv tidak ditemukan di {file_path}!")
         return pd.DataFrame(columns=CSV_COLUMNS)
 data_kandidat = load_data()
 
@@ -250,19 +250,19 @@ elif st.session_state.page == "Input Data":
                     new_row_df = pd.DataFrame([new_row_data], columns=CSV_COLUMNS)
                     
                     try:
-                        file_exists = os.path.exists("Dataset.csv")
+                        file_exists = os.path.exists("dataset.csv")
                         is_empty = False
                         if file_exists:
                             try:
-                                df_check = pd.read_csv("Dataset.csv")
+                                df_check = pd.read_csv("dataset.csv")
                                 if df_check.empty:
                                     is_empty = True
                             except pd.errors.EmptyDataError:
                                 is_empty = True
                         
                         write_header = not file_exists or is_empty
-                        new_row_df.to_csv("Dataset.csv", mode='a', header=write_header, index=False)
-                        st.session_state.candidate_success_message = f"Data untuk {nama} berhasil ditambahkan ke Dataset.csv!"
+                        new_row_df.to_csv("dataset.csv", mode='a', header=write_header, index=False)
+                        st.session_state.candidate_success_message = f"Data untuk {nama} berhasil ditambahkan ke dataset.csv!"
                         
                         # Hanya jalankan ini jika penyimpanan berhasil
                         if hasattr(load_data, 'clear'): 

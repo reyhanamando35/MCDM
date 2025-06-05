@@ -1,7 +1,9 @@
-Job Position,MBTI Preferences,PAPI Kostick Preferences
-Pre-Sales,"ENTJ, ENFJ","Leadership, Assertive"
-IT Developer,"INTJ, INTP","Analytical, Detail"
-Sales Manager,"ESFJ, ENFJ","Social, Persuasive"
-Admin,"ISFJ, ISTJ","Organized, Stable"
-Marketing,"ENFP, ESFP","Creative, Flexible"
-HRD,Extroverted (E),"Leadership & Dominance (High Energy, Aggressive, Competitive)"
+Job Position,PAPI context,M,B,T,I_M,D,I_D,S,C
+Pre-sales,O,E,N,F,P,0.3,0.4,0.2,0.1
+Technician,D,I,S,T,J,0.1,0.1,0.3,0.5
+Programmer,R,I,N,T,P,0.1,0.2,0.2,0.5
+Legal Manager,D,E,N,T,J,0.35,0.2,0.15,0.3
+Technical Supervisor,B,E,S,T,J,0.3,0.3,0.2,0.2
+Inventory Manager,D,I,S,T,J,0.1,0.2,0.4,0.3
+Chief Commercial Officer,Z,E,N,T,J,0.3,0.3,0.1,0.3
+"General Manager HR, GA & Legal",B,E,S,F,J,0.2,0.3,0.3,0.2

@@ -76,7 +76,7 @@ def calc_vikor(data, criteria, weights):
     
     return results[['Nama', 'Skor VIKOR', 'Ranking']]
 
-def run_vikor(data, job_position=None):
+def run_vikor(data, job_filter_row):
     """
     Wrapper untuk menjalankan analisis VIKOR
     """

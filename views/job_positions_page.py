@@ -1,11 +1,8 @@
-# Di views/job_positions_page.py
-
 import streamlit as st
 import pandas as pd
+import numpy as np
 import re
-import numpy as np # Diperlukan untuk np.nan jika digunakan
 
-# Kolom yang diharapkan SEKARANG HANYA 10 KOLOM
 EXPECTED_JOB_COLUMNS_JP = [
     'Job Position', 'PAPI context', 'M', 'B', 'T', 'I_M', 
     'D', 'I_D', 'S', 'C'
@@ -58,13 +55,13 @@ def render_page(app_job_positions_csv_path):
         )
         st.markdown("---")
         
-        st.markdown("### 🎭 MBTI Letters (M, B, T, I_M)")
-        st.write("Pilih satu preferensi dari setiap pasangan MBTI untuk mengisi kolom M, B, T, I_M:")
+        st.markdown("### 🎭 MBTI Letters (M, B, T, I)")
+        st.write("Pilih satu preferensi dari setiap pasangan MBTI untuk mengisi kolom M, B, T, I:")
         mbti_dichotomies = [
-            {"label": "Orientasi Energi (E/I) -> M", "options": ["Extroverted (E)", "Introverted (I)"], "key_suffix": "ei"},
-            {"label": "Fungsi Informasi (S/N) -> B", "options": ["Sensing (S)", "Intuition (N)"], "key_suffix": "sn"},
-            {"label": "Fungsi Keputusan (T/F) -> T", "options": ["Thinking (T)", "Feeling (F)"], "key_suffix": "tf"},
-            {"label": "Gaya Hidup (J/P) -> I_M", "options": ["Judging (J)", "Perceiving (P)"], "key_suffix": "jp"}
+            {"label": "Orientasi Energi (E/I)", "options": ["Extroverted (E)", "Introverted (I)"], "key_suffix": "ei"},
+            {"label": "Fungsi Informasi (S/N)", "options": ["Sensing (S)", "Intuition (N)"], "key_suffix": "sn"},
+            {"label": "Fungsi Keputusan (T/F)", "options": ["Thinking (T)", "Feeling (F)"], "key_suffix": "tf"},
+            {"label": "Gaya Hidup (J/P)", "options": ["Judging (J)", "Perceiving (P)"], "key_suffix": "jp"}
         ]
         selected_mbti_letters = []
         cols_mbti = st.columns(len(mbti_dichotomies))
@@ -78,12 +75,12 @@ def render_page(app_job_positions_csv_path):
                 selected_mbti_letters.append(match.group(1).upper() if match else "")
         st.markdown("---")
 
-        st.markdown("### 🔢 Skor DISC (D, I_D, S, C)")
+        st.markdown("### 🔢 Skor DISC (D, I, S, C)")
         st.write("Masukkan skor untuk setiap komponen DISC (total harus 1.0):")
         col1_disc, col2_disc = st.columns(2)
         with col1_disc:
             val_D = st.number_input("D (Dominance)", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="score_D_job")
-            val_ID = st.number_input("I_D (Influence)", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="score_ID_job")
+            val_ID = st.number_input("I (Influence)", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="score_ID_job")
         with col2_disc:
             val_S = st.number_input("S (Steadiness)", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="score_S_job")
             val_C = st.number_input("C (Conscientiousness)", min_value=0.0, max_value=1.0, value=0.25, step=0.01, key="score_C_job")
@@ -100,7 +97,7 @@ def render_page(app_job_positions_csv_path):
             elif not selected_papi_context_label: # <<<--- VALIDASI TAMBAHAN DI SINI
                 st.error("Preferensi utama PAPI harus dipilih.")
             elif abs(total_disc - 1.0) > 0.01: 
-                st.error(f"❌ Total skor D+I_D+S+C harus = 1.0. Saat ini: {total_disc:.2f}")
+                st.error(f"❌ Total skor D+I+S+C harus = 1.0. Saat ini: {total_disc:.2f}")
             elif len(selected_mbti_letters) != 4 or any(not letter for letter in selected_mbti_letters):
                 st.error("Semua 4 preferensi MBTI harus dipilih.")
             else:
@@ -137,12 +134,5 @@ def render_page(app_job_positions_csv_path):
                             app_job_positions_csv_path, index=False
                         )
                         st.success(f"✅ Posisi '{job_position_input_nama}' berhasil ditambahkan!")
-                        # Pertimbangkan untuk st.rerun() jika ingin form di-reset atau update langsung terlihat
-                        # st.rerun() 
                     except Exception as e:
                         st.error(f"Gagal menyimpan: {e}")
-                
-                # Tampilkan ringkasan (opsional, bisa di luar blok else jika selalu ingin ditampilkan setelah submit)
-                # st.write(f"**Posisi:** {job_position_input_nama}")
-                # st.write(f"**PAPI Context:** {actual_papi_value}")
-                # ... (ringkasan lainnya)

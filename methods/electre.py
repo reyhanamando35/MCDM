@@ -132,9 +132,10 @@ def run_electre(data, job_filter_row):
     """
     # Agregasi data ke 5 kriteria
     aggregated_data = agg_to_5(data, job_filter_row)
+    aggregated_data = aggregated_data.rename(columns={'Nama': 'NAMA'})
     
     # Definisi kriteria dan bobot
-    criteria = ['IST', 'PAPI Kostick', 'MBTI', 'Kraepelin', 'DISC']
+    criteria = ['IST', 'PAPI', 'MBTI', 'Kraepelin', 'DISC']
     
     # Jalankan ELECTRE
     results = calc_electre(aggregated_data, criteria)

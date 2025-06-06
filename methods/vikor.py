@@ -23,6 +23,11 @@ def calc_vikor(data, criteria, weights):
     # 2. Tentukan nilai ideal positif dan negatif
     f_star = np.max(dm, axis=0)  # Nilai terbaik setiap kriteria
     f_minus = np.min(dm, axis=0)  # Nilai terburuk setiap kriteria
+
+    # norm_matx = 
+
+    weights = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
+    weighted = norm_matx * weights
     
     # 3. Hitung nilai S dan R untuk setiap alternatif
     S = np.zeros(len(alternatives))

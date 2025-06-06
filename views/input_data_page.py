@@ -73,11 +73,11 @@ def render_page(app_csv_columns, load_data_callback_for_clear):
                 new_row_df = pd.DataFrame([new_row_data], columns=app_csv_columns)
 
                 try:
-                    file_exists = os.path.exists("Dataset.csv")
+                    file_exists = os.path.exists("dataset.csv")
                     is_empty = False
                     if file_exists:
                         try:
-                            df_check = pd.read_csv("Dataset.csv")
+                            df_check = pd.read_csv("dataset.csv")
                             if df_check.empty:
                                 is_empty = True
                         except pd.errors.EmptyDataError:

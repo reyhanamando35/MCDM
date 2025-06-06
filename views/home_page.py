@@ -92,16 +92,9 @@ def render_page(data_kandidat, job_positions_df_from_state):
             st.success(f"Menganalisis kandidat untuk posisi: {selected_job}")
 
             st.subheader("📊 Data Hasil Agregasi (5 Kriteria)")
-            np.random.seed(42)
-            aggregated_data = pd.DataFrame({
-                'Nama': data_kandidat['NAMA'],
-                'IST_Score': np.random.randint(60, 100, len(data_kandidat)),
-                'MBTI_Score': np.random.randint(60, 100, len(data_kandidat)),
-                'PAPI_Score': np.random.randint(60, 100, len(data_kandidat)),
-                'DISC_Score': np.random.randint(60, 100, len(data_kandidat)),
-                'Kraepelin_Score': np.random.randint(60, 100, len(data_kandidat))
-            })
-            st.dataframe(aggregated_data, use_container_width=True)
+
+            agg_data = agg_to_5(data_kandidat, job_positions_df_from_state.loc[job_positions_df_from_state['Job Position'] == selected_job].iloc[0])
+            st.dataframe(agg_data, use_container_width=True)
 
     st.markdown("---")
 
@@ -113,14 +106,6 @@ def render_page(data_kandidat, job_positions_df_from_state):
         run_vikor = st.button("🔍 Run VIKOR Only", use_container_width=True)
     with col3:
         run_electre = st.button("📊 Run ELECTRE Only", use_container_width=True)
-
-    def dummy_scores(method_name, candidate_names):
-        np.random.seed(42) # Konsistensi dummy data
-        scores = np.random.rand(len(candidate_names))
-        ranked = sorted(zip(candidate_names, scores), key=lambda x: -x[1])
-        df_rank = pd.DataFrame(ranked, columns=["Nama", f"Skor {method_name}"])
-        df_rank['Ranking'] = df_rank[f"Skor {method_name}"].rank(ascending=False).astype(int)
-        return df_rank
 
     if not data_kandidat.empty and 'NAMA' in data_kandidat.columns: # Pastikan kolom NAMA ada
         candidate_names_for_dummy = data_kandidat['NAMA']

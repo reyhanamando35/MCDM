@@ -2,7 +2,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import re # Import modul regular expression
+import re
+from utils.preprocess import prep_dm, agg_to_5
+from methods.vikor import run_vikor
+from methods.electre import run_electre
 
 # Fungsi untuk memformat string MBTI ke akronim atau membiarkannya jika sudah akronim
 def format_mbti_for_display(mbti_string):
@@ -49,13 +52,7 @@ def render_page(data_kandidat, job_positions_df_from_state):
     # Job Positions Table
     st.subheader("📋 Daftar Posisi Pekerjaan")
     if job_positions_df_from_state is not None and not job_positions_df_from_state.empty:
-        df_display_jobs = job_positions_df_from_state.copy() # Buat salinan untuk dimodifikasi
-        
-        # Bagian ini tidak lagi diperlukan karena kolom 'MBTI Preferences' akan dihapus dari DataFrame sumber
-        # if 'MBTI Preferences' in df_display_jobs.columns:
-        #     # Terapkan fungsi pemformatan ke kolom 'MBTI Preferences'
-        #     df_display_jobs['MBTI Preferences'] = df_display_jobs['MBTI Preferences'].apply(format_mbti_for_display)
-            
+        df_display_jobs = job_positions_df_from_state.copy()
         st.dataframe(df_display_jobs, use_container_width=True)
     else:
         st.info("Belum ada data posisi pekerjaan.")
@@ -131,20 +128,20 @@ def render_page(data_kandidat, job_positions_df_from_state):
             col1_mcdm, col2_mcdm = st.columns(2) # Menggunakan nama variabel kolom yang berbeda
             with col1_mcdm:
                 st.markdown("### 🔍 Hasil VIKOR")
-                df_vikor = dummy_scores("VIKOR", candidate_names_for_dummy)
+                df_vikor = run_vikor()
                 st.dataframe(df_vikor.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
             with col2_mcdm:
                 st.markdown("### 📊 Hasil ELECTRE")
-                df_electre = dummy_scores("ELECTRE", candidate_names_for_dummy)
+                df_electre = run_electre()
                 st.dataframe(df_electre.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
         elif run_vikor:
             st.markdown("### 🔍 Hasil VIKOR")
-            df_vikor = dummy_scores("VIKOR", candidate_names_for_dummy)
+            df_vikor = run_vikor()
             st.dataframe(df_vikor.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
         elif run_electre:
             st.markdown("### 📊 Hasil ELECTRE")
             # df_electre = dummy_scores("ELECTRE", candidate_names_for_dummy)
-            # df_electre = run_electre(agg_to_5(data_kandidat, job_positions_df_from_state.loc[job_positions_df_from_state['Job Position'] == selected_job].iloc[0]), selected_job) masih salah inii
+            df_electre = run_electre(agg_to_5(data_kandidat, job_positions_df_from_state.loc[job_positions_df_from_state['Job Position'] == selected_job].iloc[0]), selected_job)
             st.dataframe(df_electre.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
     elif generate_final or run_all or run_vikor or run_electre:
         st.warning("Tidak ada data kandidat (atau kolom NAMA tidak ada) untuk diproses. Silakan input data terlebih dahulu.")

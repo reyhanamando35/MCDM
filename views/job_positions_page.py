@@ -57,7 +57,7 @@ def render_page(app_job_positions_csv_path):
             placeholder="Pilih salah satu (O, B, R, D, Z)", key="papi_context_selector"
         )
         st.markdown("---")
-
+        
         st.markdown("### 🎭 MBTI Letters (M, B, T, I_M)")
         st.write("Pilih satu preferensi dari setiap pasangan MBTI untuk mengisi kolom M, B, T, I_M:")
         mbti_dichotomies = [

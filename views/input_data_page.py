@@ -84,7 +84,7 @@ def render_page(app_csv_columns, load_data_callback_for_clear):
                             is_empty = True
                     
                     write_header = not file_exists or is_empty
-                    new_row_df.to_csv("Dataset.csv", mode='a', header=write_header, index=False)
+                    new_row_df.to_csv("dataset.csv", mode='a', header=write_header, index=False)
                     st.session_state.candidate_success_message = f"Data untuk {nama} berhasil ditambahkan ke Dataset.csv!"
                     
                     if hasattr(load_data_callback_for_clear, 'clear'): 

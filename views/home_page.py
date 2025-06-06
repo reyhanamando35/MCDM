@@ -1,8 +1,9 @@
+# home_page.py
 import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-from utils.preprocess import agg_to_5
+from utils.preprocess import prep_dm, agg_to_5
 from methods.vikor import run_vikor
 from methods.electre import run_electre
 
@@ -48,13 +49,10 @@ def render_page(data_kandidat, job_positions_df_from_state):
     st.subheader("📋 Data Kandidat Lengkap")
     st.dataframe(data_kandidat, use_container_width=True)
 
-    # Job Positions Table - Menerapkan pemformatan MBTI
+    # Job Positions Table
     st.subheader("📋 Daftar Posisi Pekerjaan")
     if job_positions_df_from_state is not None and not job_positions_df_from_state.empty:
-        df_display_jobs = job_positions_df_from_state.copy() # Buat salinan untuk dimodifikasi
-        if 'MBTI Preferences' in df_display_jobs.columns:
-            # Terapkan fungsi pemformatan ke kolom 'MBTI Preferences'
-            df_display_jobs['MBTI Preferences'] = df_display_jobs['MBTI Preferences'].apply(format_mbti_for_display)
+        df_display_jobs = job_positions_df_from_state.copy()
         st.dataframe(df_display_jobs, use_container_width=True)
     else:
         st.info("Belum ada data posisi pekerjaan.")
@@ -68,8 +66,13 @@ def render_page(data_kandidat, job_positions_df_from_state):
     col_home_1, col_home_2, col_home_3 = st.columns([2, 2, 2])
     with col_home_1:
         if job_positions_df_from_state is not None and not job_positions_df_from_state.empty:
-            job_options_list = job_positions_df_from_state['Job Position'].tolist()
-            selected_job_index = 0 if job_options_list else None
+            # Pastikan kolom 'Job Position' ada sebelum mencoba mengaksesnya
+            if 'Job Position' in job_positions_df_from_state.columns:
+                job_options_list = job_positions_df_from_state['Job Position'].dropna().tolist() # dropna untuk menghindari error jika ada NaN
+                selected_job_index = 0 if job_options_list else None
+            else:
+                job_options_list = ["Data posisi tidak valid"]
+                selected_job_index = 0
         else:
             job_options_list = ["Tidak ada posisi tersedia"]
             selected_job_index = 0
@@ -77,14 +80,14 @@ def render_page(data_kandidat, job_positions_df_from_state):
         selected_job = st.selectbox(
             "Pilih Posisi Pekerjaan:",
             options=job_options_list,
-            index=selected_job_index,
+            index=selected_job_index if selected_job_index is not None and job_options_list else 0,
             key="home_selectbox_job"
         )
 
     generate_final = st.button("🚀 Generate Final Data", use_container_width=True)
     if generate_final:
-        if selected_job == "Tidak ada posisi tersedia" or data_kandidat.empty:
-            st.warning("Tidak dapat menganalisis. Pastikan ada data kandidat dan posisi pekerjaan yang dipilih.")
+        if selected_job == "Tidak ada posisi tersedia" or selected_job == "Data posisi tidak valid" or data_kandidat.empty:
+            st.warning("Tidak dapat menganalisis. Pastikan ada data kandidat dan posisi pekerjaan yang valid dipilih.")
         else:
             st.success(f"Menganalisis kandidat untuk posisi: {selected_job}")
 
@@ -104,34 +107,26 @@ def render_page(data_kandidat, job_positions_df_from_state):
     with col3:
         run_electre = st.button("📊 Run ELECTRE Only", use_container_width=True)
 
-    def dummy_scores(method_name, candidate_names):
-        np.random.seed(42) # Konsistensi dummy data
-        scores = np.random.rand(len(candidate_names))
-        ranked = sorted(zip(candidate_names, scores), key=lambda x: -x[1])
-        df_rank = pd.DataFrame(ranked, columns=["Nama", f"Skor {method_name}"])
-        df_rank['Ranking'] = df_rank[f"Skor {method_name}"].rank(ascending=False).astype(int)
-        return df_rank
-
-    if not data_kandidat.empty:
+    if not data_kandidat.empty and 'NAMA' in data_kandidat.columns: # Pastikan kolom NAMA ada
         candidate_names_for_dummy = data_kandidat['NAMA']
         if run_all:
-            col1, col2 = st.columns(2)
-            with col1:
+            col1_mcdm, col2_mcdm = st.columns(2) # Menggunakan nama variabel kolom yang berbeda
+            with col1_mcdm:
                 st.markdown("### 🔍 Hasil VIKOR")
-                df_vikor = dummy_scores("VIKOR", candidate_names_for_dummy)
+                df_vikor = run_vikor()
                 st.dataframe(df_vikor.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
-            with col2:
+            with col2_mcdm:
                 st.markdown("### 📊 Hasil ELECTRE")
-                df_electre = dummy_scores("ELECTRE", candidate_names_for_dummy)
+                df_electre = run_electre()
                 st.dataframe(df_electre.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
         elif run_vikor:
             st.markdown("### 🔍 Hasil VIKOR")
-            df_vikor = dummy_scores("VIKOR", candidate_names_for_dummy)
+            df_vikor = run_vikor()
             st.dataframe(df_vikor.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
         elif run_electre:
             st.markdown("### 📊 Hasil ELECTRE")
             # df_electre = dummy_scores("ELECTRE", candidate_names_for_dummy)
-            # df_electre = run_electre(agg_to_5(data_kandidat, job_positions_df_from_state.loc[job_positions_df_from_state['Job Position'] == selected_job].iloc[0]), selected_job) masih salah inii
+            df_electre = run_electre(agg_to_5(data_kandidat, job_positions_df_from_state.loc[job_positions_df_from_state['Job Position'] == selected_job].iloc[0]), selected_job)
             st.dataframe(df_electre.style.apply(lambda x: ['background-color: lightgreen' if r == 1 else '' for r in x['Ranking']], axis=1), use_container_width=True)
     elif generate_final or run_all or run_vikor or run_electre:
-        st.warning("Tidak ada data kandidat untuk diproses. Silakan input data terlebih dahulu.")
+        st.warning("Tidak ada data kandidat (atau kolom NAMA tidak ada) untuk diproses. Silakan input data terlebih dahulu.")

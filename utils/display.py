@@ -21,14 +21,15 @@ def manage_display(
     if 'page' not in st.session_state:
         st.session_state.page = "Home"
 
-    # 2. Membuat dan menampilkan navbar
+    # 2. Membuat dan menampilkan navbar (Layout yang Benar)
     st.markdown("---")
-    nav_cols = st.columns([1, 1, 1, 5])
+    # Buat 3 kolom dengan lebar yang sama persis
+    nav_cols = st.columns(3) # <--- UBAH BARIS INI
     with nav_cols[0]:
         if st.button("🏠 Home", use_container_width=True, key="nav_home"):
             st.session_state.page = "Home"
     with nav_cols[1]:
-        if st.button("📝 Candidate Data", use_container_width=True, key="nav_input_data"):
+        if st.button("📝 Input Candidate Data", use_container_width=True, key="nav_input_data"):
             st.session_state.page = "Input Data"
     with nav_cols[2]:
         if st.button("💼 Job Positions", use_container_width=True, key="nav_job_positions"):

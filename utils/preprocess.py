@@ -10,6 +10,15 @@ def prep_dm(data, criteria):
     return matrix, alternatives
 
 def agg_to_5(data, job_filter_row):
+    """
+    Melakukan agregasi data, dari 47 kolom menjadi 5 kolom.
+    Aturan:
+    1. IST: Jika deviasi standar dari 9 sub-kriteria IST rendah, gunakan nilai IQ, jika tinggi kenakan penalti sebesar 0.9.
+    2. PAPI Kostick: Hitung daya kerja dan risiko berdasarkan konteks PAPI yang dipilih. Daya Kerja = Atribut Positif + PAPI Context, Risiko = Atribut Negatif.
+    3. MBTI: Hitung berdasarkan preferensi MBTI yang dipilih.
+    4. Kraepelin: Hitung berdasarkan bobot yang telah ditentukan -> fix [0.25, 0.25, 0.125, 0.125, 0.25].
+    5. DISC: Normalisasi min-max untuk setiap komponen DISC, lalu hitung berdasarkan bobot yang diberikan.
+    """
     result = pd.DataFrame()
     result["Nama"] = data["NAMA"]
 
@@ -33,7 +42,7 @@ def agg_to_5(data, job_filter_row):
     papi_pos = ['P_C', 'P_F', 'P_W', 'P_N', 'P_G', 'P_A', 'P_P', 'P_I', 'P_V']
     papi_neg = ['P_S', 'P_X', 'P_E', 'P_K', 'P_L', 'P_T']
 
-    # Ambil huruf dari kolom 'PAPI context' di job_filter_row (misal 'R')
+    # Ambil huruf dari kolom 'PAPI context' di job_filter_row
     context_letter = job_filter_row['PAPI context'].strip().upper()
     context_col = f'P_{context_letter}'
 

@@ -1,6 +1,4 @@
 import streamlit as st
-
-# Impor semua modul halaman dari folder 'views' ada di sini
 from views import home_page, input_data_page, job_positions_page
 
 def manage_display(
@@ -21,10 +19,15 @@ def manage_display(
     if 'page' not in st.session_state:
         st.session_state.page = "Home"
 
-    # 2. Membuat dan menampilkan navbar (Layout yang Benar)
+    # 2. Membuat Judul Page
+    st.title("📋 Dashboard Seleksi Karyawan Berbasis MCDM")
     st.markdown("---")
+
+    # 2. Membuat dan menampilkan navbar
+    st.subheader("Pilih Halaman:")
+
     # Buat 3 kolom dengan lebar yang sama persis
-    nav_cols = st.columns(3) # <--- UBAH BARIS INI
+    nav_cols = st.columns(3)
     with nav_cols[0]:
         if st.button("🏠 Home", use_container_width=True, key="nav_home"):
             st.session_state.page = "Home"
@@ -43,16 +46,10 @@ def manage_display(
         home_page.render_page(data_kandidat, job_positions_df)
         
     elif page == "Input Data":
-        if hasattr(input_data_page, 'render_page'):
-            input_data_page.render_page(csv_columns_kandidat, load_data_kandidat_func)
-        else:
-            st.error("views/input_data_page.py belum memiliki fungsi render_page atau belum diimport dengan benar.")
+        input_data_page.render_page(csv_columns_kandidat, load_data_kandidat_func)
             
     elif page == "Job Positions":
-        if hasattr(job_positions_page, 'render_page'):
-            job_positions_page.render_page(job_positions_csv_path)
-        else:
-            st.error("views/job_positions_page.py belum memiliki fungsi render_page atau belum diimport dengan benar.")
+        job_positions_page.render_page(job_positions_csv_path)
             
     else:
         # Jika state tidak valid, kembali ke Home

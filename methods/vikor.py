@@ -17,14 +17,13 @@ def calc_vikor(data, criteria):
     """
     
     # 1. Siapkan matriks keputusan
-    dm, alternatives = prep_dm(data, criteria)
+    dm, alt = prep_dm(data, criteria)
     
     # 2. Tentukan nilai ideal positif dan negatif
-    f_star = np.max(dm, axis=0)  # Nilai terbaik setiap kriteria
-    f_minus = np.min(dm, axis=0)  # Nilai terburuk setiap kriteria
+    f_star = np.max(dm, axis=0)
+    f_minus = np.min(dm, axis=0)
 
-    # norm_matx = 
-
+    # 3. Normalisasi matriks keputusan
     n_rows, n_cols = dm.shape
     norm_matx = np.zeros((n_rows, n_cols))
     
@@ -35,10 +34,11 @@ def calc_vikor(data, criteria):
             else:
                 norm_matx[i, j] = 0
 
+    # 4. Matriks terbobot (semua bobot = 0.2)
     weights = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
     weighted = norm_matx * weights
     
-    # 3. Hitung nilai S dan R untuk setiap alternatif
+    # 5. Hitung nilai S dan R untuk setiap alternatif
     S = np.zeros(n_rows)
     R = np.zeros(n_rows)
 
@@ -63,27 +63,26 @@ def calc_vikor(data, criteria):
         r_val = 0
         
         if (S_minus - S_star) != 0:
-            s_val = v * (S[i] - S_star) / (S_minus - S_star)
+            s_val = v * ((S[i] - S_minus) / (S_star - S_minus))
         
         if (R_minus - R_star) != 0:
-            r_val = (1 - v) * (R[i] - R_star) / (R_minus - R_star)
+            r_val = (1 - v) * ((R[i] - R_minus) / (R_star - R_minus))
         
         Q[i] = s_val + r_val
     
     # 5. Buat DataFrame hasil
     results = pd.DataFrame({
-        'Nama': alternatives,
-        'S_Value': S,
-        'R_Value': R,
-        'Q_Value': Q,
-        'Skor VIKOR': 1 - Q  # Skor VIKOR (semakin tinggi semakin baik)
+        'Nama': alt,
+        'Skor VIKOR': Q 
     })
     
-    # 6. Ranking berdasarkan Q value (ascending)
-    results = results.sort_values('Q_Value')
-    results['Ranking'] = range(1, len(alternatives) + 1)
+    # 6. Ranking berdasarkan Q value
+    results = results.sort_values('Skor VIKOR', ascending=True) # Nilai Q semakin rendah semakin baik
+    results['Ranking'] = range(1, len(alt) + 1)
     
     return results[['Nama', 'Skor VIKOR', 'Ranking']]
+
+# ========== FUNGSI WRAPPER UNTUK STREAMLIT ========== #
 
 def run_vikor(data, job_filter_row):
     """

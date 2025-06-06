@@ -3,9 +3,13 @@ import pandas as pd
 import numpy as np
 import os
 
-# Fungsi ini akan dipanggil dari app.py
-# Kita perlu meneruskan CSV_COLUMNS dan fungsi load_data_callback agar bisa clear cache
+# Fungsi untuk merender halaman input data kandidat
 def render_page(app_csv_columns, load_data_callback_for_clear):
+    """
+    Fungsi untuk menampilkan halaman input data kandidat.
+    """
+
+    # Inisialisasi session state untuk pesan sukses jika belum ada
     if 'candidate_success_message' in st.session_state and st.session_state.candidate_success_message:
         st.success(st.session_state.candidate_success_message)
         del st.session_state.candidate_success_message
@@ -14,11 +18,14 @@ def render_page(app_csv_columns, load_data_callback_for_clear):
     st.subheader("📥 Input Data Calon Baru")
 
     with st.form("input_form_kandidat"):
+        # Inisialisasi dictionary untuk menyimpan semua input & nilai
+        all_input_values = {}
+
+        # Input untuk nama calon
         nama = st.text_input("Nama Calon")
         st.markdown("---")
 
-        all_input_values = {}
-
+        # Input untuk hasil IST
         st.markdown("### 🧠 IST (Intelligence Structure Test)")
         ist_fields = [col for col in app_csv_columns if col in ["SE", "WA", "AN", "GE", "ME", "RA", "ZR", "FA", "WU", "IQ"]]
         cols_ist = st.columns(5)
@@ -27,6 +34,7 @@ def render_page(app_csv_columns, load_data_callback_for_clear):
                 all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=150, key=f"input_ist_{field}")
         st.markdown("---")
 
+        # Input untuk PAPI Kostick
         st.markdown("### 📊 PAPI Kostick")
         papi_fields = [col for col in app_csv_columns if col.startswith("P_")]
         num_papi_cols_ui = 5
@@ -37,6 +45,7 @@ def render_page(app_csv_columns, load_data_callback_for_clear):
                     all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=9, key=f"input_papi_{field}")
         st.markdown("---")
 
+        # Input untuk MBTI
         st.markdown("### 🎭 MBTI")
         mbti_fields = [col for col in app_csv_columns if col.startswith("M_")]
         cols_mbti = st.columns(4)
@@ -45,14 +54,16 @@ def render_page(app_csv_columns, load_data_callback_for_clear):
                 all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=100, key=f"input_mbti_{field}")
         st.markdown("---")
 
+        # Input untuk Kraepelin
         st.markdown("### ⏱️ Kraepelin")
         kraep_fields = [col for col in app_csv_columns if col.startswith("K_")]
         cols_kraep = st.columns(len(kraep_fields) if len(kraep_fields) > 0 else 1)
         for i, field in enumerate(kraep_fields):
             with cols_kraep[i % len(kraep_fields) if len(kraep_fields) > 0 else 0]:
-                all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=100, key=f"input_kraep_{field}")
+                all_input_values[field] = st.number_input(f"{field}", value=0, min_value=0, max_value=5, key=f"input_kraep_{field}")
         st.markdown("---")
 
+        # Input untuk DISC
         st.markdown("### 🎯 DISC")
         disc_fields = [col for col in app_csv_columns if col.startswith("D_")]
         cols_disc = st.columns(len(disc_fields) if len(disc_fields) > 0 else 1)
@@ -62,6 +73,7 @@ def render_page(app_csv_columns, load_data_callback_for_clear):
 
         submitted_kandidat = st.form_submit_button("➕ Tambahkan ke Data Kandidat")
 
+        # Validasi input sebelum menyimpan
         if submitted_kandidat:
             if not nama:
                 st.error("Nama Calon tidak boleh kosong.")

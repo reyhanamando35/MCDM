@@ -57,14 +57,14 @@ def render_page(app_job_positions_csv_path):
             placeholder="Pilih salah satu (O, B, R, D, Z)", key="papi_context_selector"
         )
         st.markdown("---")
-        
-        st.markdown("### 🎭 MBTI Letters (M, B, T, I_M)")
-        st.write("Pilih satu preferensi dari setiap pasangan MBTI untuk mengisi kolom M, B, T, I_M:")
+
+        st.markdown("### 🎭 MBTI Letters (M, B, T, I)")
+        st.write("Pilih satu preferensi dari setiap pasangan MBTI untuk mengisi kolom M, B, T, I:")
         mbti_dichotomies = [
             {"label": "Orientasi Energi (E/I) -> M", "options": ["Extroverted (E)", "Introverted (I)"], "key_suffix": "ei"},
             {"label": "Fungsi Informasi (S/N) -> B", "options": ["Sensing (S)", "Intuition (N)"], "key_suffix": "sn"},
             {"label": "Fungsi Keputusan (T/F) -> T", "options": ["Thinking (T)", "Feeling (F)"], "key_suffix": "tf"},
-            {"label": "Gaya Hidup (J/P) -> I_M", "options": ["Judging (J)", "Perceiving (P)"], "key_suffix": "jp"}
+            {"label": "Gaya Hidup (J/P) -> I", "options": ["Judging (J)", "Perceiving (P)"], "key_suffix": "jp"}
         ]
         selected_mbti_letters = []
         cols_mbti = st.columns(len(mbti_dichotomies))

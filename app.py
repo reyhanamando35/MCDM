@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-
-# Impor fungsi tunggal dari modul display yang baru kita buat
 from utils.display import manage_display
 
 # ---------- Konfigurasi Halaman ---------- #
@@ -24,7 +22,7 @@ EXPECTED_JOB_COLUMNS = [
 ]
 JOB_POSITIONS_CSV_PATH = "job_positions.csv"
 
-# ---------- Fungsi-Fungsi Load Data (Logika Bisnis) ---------- #
+# ---------- Fungsi-Fungsi Load Data ---------- #
 @st.cache_data
 def load_data_kandidat():
     file_path = "dataset.csv"
@@ -45,10 +43,14 @@ def load_data_kandidat():
 def get_default_job_positions_data():
     data = {
         'Job Position': ['Pre-Sales', 'IT Developer', 'Sales Manager', 'Admin', 'Marketing'],
-        'PAPI context': ['O', 'R', 'B', 'D', 'Z'], 'M': ['E', 'I', 'E', 'I', 'E'],
-        'B': ['N', 'N', 'S', 'S', 'N'], 'T': ['T', 'T', 'F', 'T', 'F'],
-        'I_M': ['J', 'P', 'J', 'J', 'P'], 'D': [0.3, 0.1, 0.2, 0.4, 0.25],
-        'I_D': [0.4, 0.2, 0.3, 0.1, 0.25], 'S': [0.2, 0.2, 0.3, 0.3, 0.25],
+        'PAPI context': ['O', 'R', 'B', 'D', 'Z'], 
+        'M': ['E', 'I', 'E', 'I', 'E'],
+        'B': ['N', 'N', 'S', 'S', 'N'], 
+        'T': ['T', 'T', 'F', 'T', 'F'],
+        'I_M': ['J', 'P', 'J', 'J', 'P'], 
+        'D': [0.3, 0.1, 0.2, 0.4, 0.25],
+        'I_D': [0.4, 0.2, 0.3, 0.1, 0.25], 
+        'S': [0.2, 0.2, 0.3, 0.3, 0.25],
         'C': [0.1, 0.5, 0.2, 0.2, 0.25]
     }
     return pd.DataFrame(data, columns=EXPECTED_JOB_COLUMNS)
@@ -65,14 +67,12 @@ def load_or_initialize_job_positions():
         default_df.to_csv(JOB_POSITIONS_CSV_PATH, index=False)
         return default_df.copy()
 
-# ---------- "Main" Program Logic ---------- #
+# ---------- Main Program Logic ---------- #
 def main():
-    # 1. Siapkan semua data yang dibutuhkan
     data_kandidat = load_data_kandidat()
     if 'job_positions_df' not in st.session_state:
         st.session_state.job_positions_df = load_or_initialize_job_positions()
     
-    # 2. Serahkan semua urusan tampilan ke modul display
     manage_display(
         data_kandidat=data_kandidat,
         job_positions_df=st.session_state.job_positions_df,

@@ -34,7 +34,7 @@ def calc_electre(data, criteria):
     # 2. Normalisasi matriks
     norm_matx = norm(dm)
     
-    ## 3. Matriks terbobot (semua bobot = 0.2)
+    # 3. Matriks terbobot (semua bobot = 0.2)
     weights = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
     weighted = norm_matx * weights
     
@@ -78,6 +78,7 @@ def calc_electre(data, criteria):
                     discordance[i, j] = max_diff_discord / max_diff_all
     
     # 6. Hitung threshold concordance dan discordance
+                    
     # Threshold concordance: rata-rata dari elemen non-diagonal matrix concordance
     concordance_sum = 0
     count = 0
@@ -109,7 +110,7 @@ def calc_electre(data, criteria):
     # 8. Aggregate dominant matrix
     aggregate = con_dom & discon_dom
     
-    # 9. Hitung skor ELECTRE (jumlah dominasi)
+    # 9. Hitung skor ELECTRE
     electre_scores = np.sum(aggregate, axis=1)
     
     # 10. Buat DataFrame hasil
@@ -132,9 +133,10 @@ def run_electre(data, job_filter_row):
     """
     # Agregasi data ke 5 kriteria
     aggregated_data = agg_to_5(data, job_filter_row)
+    aggregated_data = aggregated_data.rename(columns={'Nama': 'NAMA'})
     
     # Definisi kriteria dan bobot
-    criteria = ['IST', 'PAPI Kostick', 'MBTI', 'Kraepelin', 'DISC']
+    criteria = ['IST', 'PAPI', 'MBTI', 'Kraepelin', 'DISC']
     
     # Jalankan ELECTRE
     results = calc_electre(aggregated_data, criteria)
